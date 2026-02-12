@@ -241,7 +241,7 @@ textColor="#c9d1d9"
 While this application implements secure password hashing with bcrypt, consider implementing the following additional security measures for production use:
 
 1. **Password Strength Requirements**:
-   - Minimum 8-12 characters
+   - Minimum 12 characters (8 characters absolute minimum)
    - Require mix of uppercase, lowercase, numbers, and special characters
    - Check against common password dictionaries
    - Implement password strength meter in UI
