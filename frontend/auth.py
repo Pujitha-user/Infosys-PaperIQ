@@ -1,6 +1,6 @@
 import json
 import os
-import hashlib
+import bcrypt
 from datetime import datetime
 from pathlib import Path
 
@@ -14,8 +14,14 @@ DB_DIR.mkdir(exist_ok=True)
 
 
 def hash_password(password: str) -> str:
-    """Hash password using SHA256"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password using bcrypt with salt"""
+    salt = bcrypt.gensalt(rounds=12)
+    return bcrypt.hashpw(password.encode(), salt).decode()
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify password against hashed version"""
+    return bcrypt.checkpw(password.encode(), hashed.encode())
 
 
 def load_users() -> dict:
@@ -79,7 +85,7 @@ def login_user(username: str, password: str) -> tuple[bool, str]:
     if username not in users:
         return False, "Username not found"
     
-    if users[username]['password'] != hash_password(password):
+    if not verify_password(password, users[username]['password']):
         return False, "Incorrect password"
     
     return True, "Login successful!"
