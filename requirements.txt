@@ -16,3 +16,8 @@ fpdf
 google-auth-oauthlib
 google-auth-httplib2
 google-api-python-client
+
+# Document processing
+PyPDF2
+python-docx
+plotly

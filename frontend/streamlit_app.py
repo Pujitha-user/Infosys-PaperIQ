@@ -71,6 +71,10 @@ if st.button("Analyze"):
 
                     # Display metrics with better formatting and explanations
                     for k, v in data['diagnostics'].items():
+                        # Skip sentiment fields (not in metric_names)
+                        if k in ['sentiment_polarity', 'sentiment_subjectivity']:
+                            continue
+                        
                         # Format the value based on the metric type
                         if k in ['avg_sentence_len', 'avg_word_len']:
                             formatted_value = f"{v:.2f}"
