@@ -228,10 +228,36 @@ textColor="#c9d1d9"
 
 ##  Security
 
-- **Password Hashing** - SHA256 encryption
+### Password Security
+- **Password Hashing** - bcrypt with salt (12 rounds)
 - **Session Management** - Secure state handling
 - **Input Validation** - Backend/frontend validation
 - **Data Isolation** - User-specific history
+
+### Important Notes for Existing Users
+⚠️ **Password Migration Required**: If you are upgrading from a previous version that used SHA256 hashing, existing users will need to reset their passwords. The new bcrypt hashing algorithm is incompatible with the old SHA256 hashes.
+
+### Recommended Security Enhancements
+While this application implements secure password hashing with bcrypt, consider implementing the following additional security measures for production use:
+
+1. **Password Strength Requirements**:
+   - Minimum 12 characters (8 characters absolute minimum)
+   - Require mix of uppercase, lowercase, numbers, and special characters
+   - Check against common password dictionaries
+   - Implement password strength meter in UI
+
+2. **Rate Limiting for Login Attempts**:
+   - Limit failed login attempts (e.g., 5 attempts per 15 minutes)
+   - Implement temporary account lockout after multiple failed attempts
+   - Add CAPTCHA after several failed attempts
+   - Log suspicious authentication attempts
+
+3. **Additional Security Measures**:
+   - Implement password reset functionality via email
+   - Add two-factor authentication (2FA)
+   - Use HTTPS in production
+   - Implement session timeout
+   - Add security headers (CORS, CSP, etc.)
 
 ##  Contributing
 
