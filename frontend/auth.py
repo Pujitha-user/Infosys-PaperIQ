@@ -1,6 +1,7 @@
 import json
 import os
 import bcrypt
+import hashlib
 from datetime import datetime
 from pathlib import Path
 
@@ -85,10 +86,19 @@ def login_user(username: str, password: str) -> tuple[bool, str]:
     if username not in users:
         return False, "Username not found"
     
-    if not verify_password(password, users[username]['password']):
-        return False, "Incorrect password"
-    
-    return True, "Login successful!"
+    stored_password = users[username]['password']
+
+    try:
+        if verify_password(password, stored_password):
+            return True, "Login successful!"
+    except ValueError:
+        legacy_hash = hashlib.sha256(password.encode()).hexdigest()
+        if stored_password == legacy_hash:
+            users[username]['password'] = hash_password(password)
+            save_users(users)
+            return True, "Login successful!"
+
+    return False, "Incorrect password"
 
 
 def load_history() -> dict:
