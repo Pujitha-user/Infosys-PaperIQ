@@ -1,6 +1,8 @@
 import json
 import os
 import bcrypt
+import hashlib
+import hmac
 from datetime import datetime
 from pathlib import Path
 
@@ -8,6 +10,7 @@ from pathlib import Path
 DB_DIR = Path(__file__).parent / "data"
 USERS_DB = DB_DIR / "users.json"
 HISTORY_DB = DB_DIR / "history.json"
+MAX_BCRYPT_PASSWORD_BYTES = 72
 
 # Create data directory if it doesn't exist
 DB_DIR.mkdir(exist_ok=True)
@@ -15,13 +18,18 @@ DB_DIR.mkdir(exist_ok=True)
 
 def hash_password(password: str) -> str:
     """Hash password using bcrypt with salt"""
+    if len(password.encode()) > MAX_BCRYPT_PASSWORD_BYTES:
+        raise ValueError(f"Password must be at most {MAX_BCRYPT_PASSWORD_BYTES} bytes")
     salt = bcrypt.gensalt(rounds=12)
     return bcrypt.hashpw(password.encode(), salt).decode()
 
 
 def verify_password(password: str, hashed: str) -> bool:
     """Verify password against hashed version"""
-    return bcrypt.checkpw(password.encode(), hashed.encode())
+    try:
+        return bcrypt.checkpw(password.encode(), hashed.encode())
+    except ValueError:
+        return False
 
 
 def load_users() -> dict:
@@ -51,6 +59,9 @@ def register_user(username: str, email: str, password: str) -> tuple[bool, str]:
     
     if len(password) < 6:
         return False, "Password must be at least 6 characters"
+
+    if len(password.encode()) > MAX_BCRYPT_PASSWORD_BYTES:
+        return False, f"Password must be at most {MAX_BCRYPT_PASSWORD_BYTES} bytes"
     
     users = load_users()
     
@@ -84,8 +95,20 @@ def login_user(username: str, password: str) -> tuple[bool, str]:
     
     if username not in users:
         return False, "Username not found"
-    
-    if not verify_password(password, users[username]['password']):
+
+    stored_password = users[username]['password']
+    if len(stored_password) == 64 and all(c in '0123456789abcdefABCDEF' for c in stored_password):
+        legacy_hash = hashlib.sha256(password.encode()).hexdigest()
+        if hmac.compare_digest(legacy_hash, stored_password):
+            users[username]['password'] = hash_password(password)
+            save_users(users)
+            return True, "Login successful!"
+        return False, "Incorrect password"
+
+    if len(password.encode()) > MAX_BCRYPT_PASSWORD_BYTES:
+        return False, f"Password must be at most {MAX_BCRYPT_PASSWORD_BYTES} bytes"
+
+    if not verify_password(password, stored_password):
         return False, "Incorrect password"
     
     return True, "Login successful!"
